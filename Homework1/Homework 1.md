@@ -1,3 +1,8 @@
+# Homework 1
+
+### Code
+
+```c
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -44,3 +49,13 @@ int main(void) {
         }
     }
 }
+```
+
+
+
+### Screenshots
+
+![](/Users/demonist/github/Y3S1/COMP3033-OS/Homework1/chess.png)
+
+![](/Users/demonist/github/Y3S1/COMP3033-OS/Homework1/all.png)
+
