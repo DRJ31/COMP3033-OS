@@ -55,7 +55,7 @@ int main(void) {
 
 ### Screenshots
 
-![](/Users/demonist/github/Y3S1/COMP3033-OS/Homework1/chess.png)
+![](chess.png)
 
-![](/Users/demonist/github/Y3S1/COMP3033-OS/Homework1/all.png)
+![](all.png)
 
