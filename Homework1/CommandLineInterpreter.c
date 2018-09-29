@@ -1,5 +1,7 @@
 #include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #define SIZE 1024
 
 int main(void) {
