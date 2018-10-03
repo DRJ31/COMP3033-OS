@@ -1,5 +1,7 @@
 # Homework 1
 
+l630003010 Renjie Deng
+
 ### Code
 
 ```c
