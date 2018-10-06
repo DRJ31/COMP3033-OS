@@ -5,11 +5,12 @@
 int main(void) {
 	char prompt[] = "Type a command: ";
 	char buf[SIZE];
+	char errorMsg[] = "CreateProcess failed!\n";
 	DWORD writeLength;
 	DWORD readLength;
+	DWORD status;
 	STARTUPINFO si; // For startup information
 	PROCESS_INFORMATION pi; // For process information
-	DWORD status;
 	HANDLE writeHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	HANDLE readHandle = GetStdHandle(STD_INPUT_HANDLE);
 
@@ -35,7 +36,6 @@ int main(void) {
 		si.cb = sizeof(si);
 		ZeroMemory(&pi, sizeof(pi));
 		if (!CreateProcess(NULL, buf, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
-			char errorMsg[] = "CreateProcess failed!\n";
 			WriteConsole(writeHandle, errorMsg, strlen(errorMsg), &writeLength, NULL);
 			continue;
 		}
