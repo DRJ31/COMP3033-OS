@@ -14,8 +14,6 @@ typedef struct {
     int remainTime; // Remained execution time before deadline
     int status; // Whether the program has finished before deadline
     int lock; // Lock the change of status when necessary
-    int waitingTime; // Total waiting time of a process
-    int lastTime; // The last time the process execute
 } Process;
 
 
@@ -77,28 +75,20 @@ void updateDeadline(Process *process) {
 
 // Update the status of a process
 void updateStatus(Process *process, int status) {
+    // Stop status change when locked
     if (!process->lock)
         process->status = status;
+    // Reset process remain time
     if (status == FINISHED)
         process->remainTime = process->burstTime;
 }
 
 
-// Get total waiting time of all the processses
-int getWaitingTime(Process *processes, int processNum) {
-    int waitingTime = 0;
-    for (int i = 0; i < processNum; i++) {
-        waitingTime += processes[i].waitingTime;
-    }
-    return waitingTime;
-}
-
-
-// Get waiting time for current process
-int getCurrentWaitingTime(Process *process, int currentTime) {
-    if (process->lock)
-        return currentTime - process->lastTime;
-    return currentTime - process->deadline + process->period;
+// Update total waiting time
+void updateWaitingTime(Process *processes, Process *current, int processNum, int *waitingTime, int passedTime) {
+    for (int i = 0; i < processNum; i++)
+        if (processes[i].id != current->id && processes[i].status)
+            *waitingTime += passedTime;
 }
 
 
@@ -116,8 +106,6 @@ int initialize(Process *processes, int processNum) {
         processes[i].remainTime = processes[i].burstTime;
         processes[i].status = UNFINISHED;
         processes[i].lock = UNLOCKED;
-        processes[i].waitingTime = 0;
-        processes[i].lastTime = 0;
     }
     return lcm(period, processNum);
 }
@@ -133,6 +121,7 @@ int main(void) {
     int processNum; // Number of processes
     int currentTime = 0; // Record running time of process
     int burst = 0; // Counter of CPU burst time
+    int waitingTime = 0; // Total waiting time
     
     // Initialization
     printf("Enter number of process to schedule: ");
@@ -143,7 +132,7 @@ int main(void) {
     // Main process
     while (currentTime < maxTime) {
         earliest = getEarliestDeadline(processes, processNum);
-        former = current;
+        former = current; // Record last process information
         current = earliest;
         // Choose correct process to run
         if (current->status == FINISHED)
@@ -160,26 +149,25 @@ int main(void) {
             if (former->id != current->id) {
                 if (former->remainTime < former->burstTime) {
                     printf("%d: process %d preempted!\n", currentTime, former->id);
-                    burst--;
                 }
                 printf("%d: process %d starts\n", currentTime, current->id);
-                current->waitingTime += getCurrentWaitingTime(current, currentTime);
-                burst++;
             }
         }
-        else {
+        // The first process
+        else
             printf("%d: process %d starts\n", currentTime, current->id);
-            current->waitingTime += getCurrentWaitingTime(current, currentTime);
-            burst++;
-        }
+        
         // Deal with different situations
         if (currentTime + current->remainTime <= earliest->deadline) {
+            updateWaitingTime(processes, current, processNum, &waitingTime, current->remainTime);
             currentTime += current->remainTime;
             updateStatus(current, FINISHED);
             current->lock = UNLOCKED;
             // Check if the process has lock before
-            if (current->status == FINISHED)
+            if (current->status == FINISHED) {
                 printf("%d: process %d ends\n", currentTime, current->id);
+                burst++;
+            }
             // Check if we need to update deadline
             if (currentTime == earliest->deadline) {
                 updateDeadline(earliest);
@@ -187,12 +175,21 @@ int main(void) {
             }
         }
         else {
-            current->remainTime = currentTime + current->remainTime - earliest->deadline;
+            // Decide if we need to keep former remain time
+            if (current->lock == LOCKED)
+                current->remainTime += currentTime + current->burstTime - earliest->deadline;
+            else
+                current->remainTime = currentTime + current->remainTime - earliest->deadline;
+            updateWaitingTime(processes, current, processNum, &waitingTime, earliest->deadline - currentTime);
             currentTime = earliest->deadline;
             if (current->id == earliest->id) {
                 printf("%d: process %d missed deadline (%d ms left)\n", currentTime, current->id, current->remainTime);
                 current->lock = LOCKED;
-                current->lastTime = currentTime;
+            }
+            else if (currentTime == current->deadline && currentTime != maxTime) {
+                printf("%d: process %d missed deadline (%d ms left)\n", currentTime, current->id, current->remainTime);
+                current->lock = LOCKED;
+                updateDeadline(current);
             }
             updateDeadline(earliest);
             updateStatus(earliest, UNFINISHED);
@@ -201,8 +198,8 @@ int main(void) {
     
     // Printing results
     printf("%d: MaxTime reached\n", maxTime);
-    printf("Sum of all waiting time: %d\n", getWaitingTime(processes, processNum));
+    printf("Sum of all waiting time: %d\n", waitingTime);
     printf("Number of CPU bursts: %d\n", burst);
-    printf("Average waiting time: %.6f\n", getWaitingTime(processes, processNum) * 1.0 / burst);
+    printf("Average waiting time: %.6f\n", waitingTime * 1.0 / burst);
     return 0;
 }
