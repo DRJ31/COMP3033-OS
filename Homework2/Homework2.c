@@ -85,6 +85,7 @@ void updateStatus(Process *process, int status) {
 
 
 // Update total waiting time
+// passedTime: Change of current time's value
 void updateWaitingTime(Process *processes, Process *current, int processNum, int *waitingTime, int passedTime) {
     for (int i = 0; i < processNum; i++)
         // Check if the process has finished and if it is running
@@ -147,16 +148,19 @@ int main(void) {
         }
         // Decide if we need to switch to new process
         if (former != NULL) {
-            if (former->id != current->id) {
-                if (former->remainTime < former->burstTime) {
+            if (former->id != current->id || former->remainTime == current->burstTime) {
+                if (former->remainTime != former->burstTime) {
                     printf("%d: process %d preempted!\n", currentTime, former->id);
                 }
                 printf("%d: process %d starts\n", currentTime, current->id);
+                burst++;
             }
         }
         // The first process
-        else
+        else {
             printf("%d: process %d starts\n", currentTime, current->id);
+            burst++;
+        }
         
         // Deal with different situations
         if (currentTime + current->remainTime <= earliest->deadline) {
@@ -166,10 +170,8 @@ int main(void) {
             updateStatus(current, FINISHED);
             current->lock = UNLOCKED;
             // Check if the process has lock before
-            if (current->status == FINISHED) {
+            if (current->status == FINISHED)
                 printf("%d: process %d ends\n", currentTime, current->id);
-                burst++;
-            }
             // Check if we need to update deadline
             if (currentTime == earliest->deadline) {
                 updateDeadline(earliest);
