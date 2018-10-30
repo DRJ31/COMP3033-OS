@@ -3,7 +3,9 @@ RM = rm -f
 TARGET = cpuScheduling
 FLAGS = -Wall
 
-.PHONY: clean
+.PHONY: all clean
+
+all: ${TARGET}
 
 clean:
 	${RM} ${TARGET}
