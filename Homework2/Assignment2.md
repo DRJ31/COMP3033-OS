@@ -1,3 +1,8 @@
+# Assignment 2
+
+l630003010 Renjie Deng
+
+```c
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -76,7 +81,7 @@ void updateDeadline(Process *process) {
 // Update the status of a process
 void updateStatus(Process *process, int status) {
     // Stop status change when locked
-    if (process->lock == UNLOCKED)
+    if (!process->lock)
         process->status = status;
     // Reset process remain time
     if (status == FINISHED)
@@ -86,7 +91,8 @@ void updateStatus(Process *process, int status) {
 
 // Update total waiting time
 // passedTime: Change of current time's value
-void updateWaitingTime(Process *processes, Process *current, int processNum, int *waitingTime, int passedTime) {
+void updateWaitingTime(Process *processes, Process *current, int processNum, 
+                       int *waitingTime, int passedTime) {
     for (int i = 0; i < processNum; i++)
         // Check if the process has finished and if it is running
         if (processes[i].id != current->id && processes[i].status)
@@ -148,28 +154,25 @@ int main(void) {
         }
         // Decide if we need to switch to new process
         if (former != NULL) {
-            if (former->id != current->id || currentTime == current->deadline - current->period) {
+            if (former->id != current->id || former->remainTime == current->burstTime) {
                 if (former->remainTime != former->burstTime) {
                     printf("%d: process %d preempted!\n", currentTime, former->id);
                 }
                 printf("%d: process %d starts\n", currentTime, current->id);
                 burst++;
             }
-            // Situation when last process has finished preempted part
-            else if (current->burstTime == former->remainTime)
-                burst++;
         }
-        // The first process or all the process is done
+        // The first process
         else {
             printf("%d: process %d starts\n", currentTime, current->id);
-            if (currentTime == 0)
-                burst++;
+            burst++;
         }
         
         // Deal with different situations
         if (currentTime + current->remainTime <= earliest->deadline) {
             // Update waiting time of other process when current time changed
-            updateWaitingTime(processes, current, processNum, &waitingTime, current->remainTime);
+            updateWaitingTime(processes, current, processNum, &waitingTime, 
+                              current->remainTime);
             currentTime += current->remainTime;
             updateStatus(current, FINISHED);
             current->lock = UNLOCKED;
@@ -185,19 +188,24 @@ int main(void) {
         else {
             // Decide if we need to keep former remain time
             if (current->lock == LOCKED)
-                current->remainTime += currentTime + current->burstTime - earliest->deadline;
+                current->remainTime += currentTime + current->burstTime 
+                - earliest->deadline;
             else
-                current->remainTime = currentTime + current->remainTime - earliest->deadline;
+                current->remainTime = currentTime + current->remainTime 
+                - earliest->deadline;
             // Update waiting time for other process when current time changed
-            updateWaitingTime(processes, current, processNum, &waitingTime, earliest->deadline - currentTime);
+            updateWaitingTime(processes, current, processNum, &waitingTime, 
+                              earliest->deadline - currentTime);
             currentTime = earliest->deadline;
             if (current->id == earliest->id) {
-                printf("%d: process %d missed deadline (%d ms left)\n", currentTime, current->id, current->remainTime);
+                printf("%d: process %d missed deadline (%d ms left)\n", 
+                       currentTime, current->id, current->remainTime);
                 current->lock = LOCKED;
             }
             // Situation when current process share same deadline with other process
             else if (currentTime == current->deadline && currentTime != maxTime) {
-                printf("%d: process %d missed deadline (%d ms left)\n", currentTime, current->id, current->remainTime);
+                printf("%d: process %d missed deadline (%d ms left)\n", 
+                       currentTime, current->id, current->remainTime);
                 current->lock = LOCKED;
                 updateDeadline(current);
             }
@@ -213,3 +221,12 @@ int main(void) {
     printf("Average waiting time: %.6f\n", waitingTime * 1.0 / burst);
     return 0;
 }
+
+```
+
+
+
+### Screenshot
+
+![](edf.png)
+
