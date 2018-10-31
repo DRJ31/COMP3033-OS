@@ -1,7 +1,7 @@
 CC = gcc
 RM = rm -f
 TARGET = cpuScheduling
-FLAGS = -Wall
+FLAGS = -Wall -std=c99
 
 .PHONY: all clean
 
