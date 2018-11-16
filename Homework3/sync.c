@@ -62,3 +62,23 @@ void *runner(void *param) {
     }
     return 0; // Thread dies.
 }
+
+int main(void) {
+    pthread_t tid[N]; // Thread ID numbers.
+    int param[N]; // One parameter for each thread.
+    int i;
+
+    // Create N threads. Each thread executes the runner function with
+    // i as argument.
+    for(i = 0; i < N; i++) {
+        param[i] = i;
+        pthread_create(&tid[i], NULL, runner, &param[i]);
+    }
+    // Wait for N threads to finish.
+    for(i = 0; i < N; i++) {
+        pthread_join(tid[i], NULL);
+    }
+    printf("\nResult is %d\n", sum);
+    return 0;
+}
+
