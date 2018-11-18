@@ -10,6 +10,7 @@
 
 int sum = 0;
 int flag[N] = {0}; // Initialize array for flag
+int count = 0;
 
 // Check if value is in the array
 // length: Length of range array
@@ -28,6 +29,8 @@ int numInArr(int self, int value, const int range[], int length) {
 // init: TRUE -> all the elements in flag, FALSE -> any element in flag
 void await(int self, int flag[], int start, int end, const int range[], int length, int init) {
     int open = init; // Check if the door has opened
+    if (start == end)
+        return;
     while (open == init) {
         for (int i = start; i <= end; i++) {
             if (numInArr(self, flag[i], range, length)) {
@@ -42,7 +45,7 @@ void await(int self, int flag[], int start, int end, const int range[], int leng
 void *runner(void *param) {
     int i = *(int *)param; // This thread’s ID number.
     int m;
-//    int j = i == 1 ? 0 : 1;
+    //    int j = i == 1 ? 0 : 1;
     int openDoor[] = {0, 1, 2}; // Range for waiting open door
     int closeDoor[] = {4}; // Range for waiting door close
     int finishExit[] = {0, 1}; // Range for waiting other lower ID to finish exit
@@ -66,7 +69,7 @@ void *runner(void *param) {
         // automatically closes).
         flag[i] = 4;
         await(i, flag, 0, i - 1, finishExit, 2, TRUE); // Wait for all lower ID to finish exit protocol
-
+        
         // The Critical Section starts right below
         int s = sum;
         // Even threads increase s, odd threads decrease s.
@@ -82,16 +85,16 @@ void *runner(void *param) {
         delay.tv_sec = 0;
         delay.tv_nsec = 100000000ULL * rand() / RAND_MAX;
         nanosleep(&delay, NULL);
-
+        
         sum = s;
         // The Critical Section ends right above
-
+        
         // Exit protocol
         await(i, flag, i + 1, N - 1, waitClose, 3, TRUE); // Ensure every process know the door is to be close
         flag[i] = 0; // Leave, reopen door if nobody still in waiting room
-
+        
         // The Remainder Section starts here
-        printf("%c", 'A' + i); // Print this thread’s ID number as a letter.
+        printf("%c %d\n", 'A' + i, ++count); // Print this thread’s ID number as a letter.
         fflush(stdout);
     }
     return 0; // Thread dies.
@@ -101,19 +104,19 @@ int main(void) {
     pthread_t tid[N]; // Thread ID numbers.
     int param[N]; // One parameter for each thread.
     int i;
-
+    
     // Create N threads. Each thread executes the runner function with
     // i as argument.
     for(i = 0; i < N; i++) {
         param[i] = i;
         pthread_create(&tid[i], NULL, runner, &param[i]);
     }
-
+    
     // Wait for N threads to finish.
     for(i = 0; i < N; i++) {
         pthread_join(tid[i], NULL);
     }
-
+    
     printf("\nResult is %d\n", sum);
     return 0;
 }
