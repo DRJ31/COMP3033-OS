@@ -29,7 +29,7 @@ int numInArr(int self, int value, const int range[], int length) {
 // init: TRUE -> all the elements in flag, FALSE -> any element in flag
 void await(int self, int flag[], int start, int end, const int range[], int length, int init) {
     int open = init; // Check if the door has opened
-    if (start == end)
+    if (start >= end)
         return;
     while (open == init) {
         for (int i = start; i <= end; i++) {
@@ -94,7 +94,7 @@ void *runner(void *param) {
         flag[i] = 0; // Leave, reopen door if nobody still in waiting room
         
         // The Remainder Section starts here
-        printf("%c %d\n", 'A' + i, ++count); // Print this thread’s ID number as a letter.
+        printf("%c", 'A' + i); // Print this thread’s ID number as a letter.
         fflush(stdout);
     }
     return 0; // Thread dies.
