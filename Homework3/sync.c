@@ -20,7 +20,7 @@ void *runner(void *param) {
         while (flag[j] >= 3); // Atomic test
         // Pi goes through the entrance door
         flag[i] = 3;
-        // CHeck whether Pj wants to enter the waiting room
+        // Check whether Pj wants to enter the waiting room
         if (flag[j] == 1) {
             // Then Pi starts waiting inside the waiting room
             flag[i] = 2;
