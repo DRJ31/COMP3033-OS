@@ -28,13 +28,13 @@ int numInArr(int self, int value, const int range[], int length) {
 // end: The last point of flag's range
 // init: TRUE -> all the elements in flag, FALSE -> any element in flag
 void await(int self, int flag[], int start, int end, const int range[], int length, int init) {
-    int open = init; // Check if the door has opened
+    int opened = init; // Check if the door has opened
     if (start >= end)
         return;
-    while (open == init) {
+    while (opened == init) {
         for (int i = start; i <= end; i++) {
             if (numInArr(self, flag[i], range, length)) {
-                open = open ? FALSE : TRUE;
+                opened = opened ? FALSE : TRUE;
                 break;
             }
         }
