@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define N       2 // Total number of threads
-#define M       100 // Number of loop iterations per thread
+#define N       26 // Total number of threads
+#define M       10 // Number of loop iterations per thread
 #define TRUE    1
 #define FALSE   0
 
@@ -13,9 +13,9 @@ int flag[N] = {0}; // Initialize array for flag
 
 // Check if value is in the array
 // length: Length of range array
-int numInArr(int value, const int range[], int length) {
+int numInArr(int self, int value, const int range[], int length) {
     for (int i = 0; i < length; i++) {
-        if (value == range[i])
+        if (value == range[i] && i != self)
             return TRUE;
     }
     return FALSE;
@@ -23,16 +23,18 @@ int numInArr(int value, const int range[], int length) {
 
 // Wait for array until it meets condition
 // length: Length of range array
-void await(int flag[], const int range[], int length) {
-    int open; // Check if the door has opened
-    while (1) {
-        open = TRUE;
-        for (int i = 0; i < N; i++) {
-            if (numInArr(flag[i], range, length))
-                open = FALSE;
+// start: The first point of flag's range
+// end: The last point of flag's range
+// init: TRUE -> all the elements in flag, FALSE -> any element in flag
+void await(int self, int flag[], int start, int end, const int range[], int length, int init) {
+    int open = init; // Check if the door has opened
+    while (open == init) {
+        for (int i = start; i <= end; i++) {
+            if (numInArr(self, flag[i], range, length)) {
+                open = open ? FALSE : TRUE;
+                break;
+            }
         }
-        if (open)
-            break;
     }
 }
 
@@ -40,7 +42,7 @@ void await(int flag[], const int range[], int length) {
 void *runner(void *param) {
     int i = *(int *)param; // This thread’s ID number.
     int m;
-    int j = i == 1 ? 0 : 1;
+//    int j = i == 1 ? 0 : 1;
     int openDoor[] = {0, 1, 2}; // Range for waiting open door
     int closeDoor[] = {4}; // Range for waiting door close
     int finishExit[] = {0, 1}; // Range for waiting other lower ID to finish exit
@@ -49,27 +51,21 @@ void *runner(void *param) {
     for(m = 0; m < M; m++) {
         // Pi wants to enter the waiting room:
         flag[i] = 1;
-//        await(flag, openDoor, 3); // Atomic test
-        while (flag[j] >= 3);
+        await(i, flag, 0, N - 1, openDoor, 3, TRUE); // Atomic test
         // Pi goes through the entrance door
         flag[i] = 3;
         // Check whether other process wants to enter the waiting room
-//        if (numInArr(1, flag, N)) {
-        if (flag[j] == 1) {
+        if (numInArr(i, 1, flag, N)) {
             // Then Pi starts waiting inside the waiting room
             flag[i] = 2;
             // Until Pj comes inside the waiting room too and the entrance
             // door closes
-//            await(flag, closeDoor, 1); // Wait for a process to enter and close door
-            while (flag[j] != 4);
+            await(i, flag, 0, N - 1, closeDoor, 1, FALSE); // Wait for a process to enter and close door
         }
         // In all cases, flag[i] becomes 4 (that’s also when the entrance door
         // automatically closes).
         flag[i] = 4;
-//        await(flag, finishExit, 2); // Wait for all lower ID to finish exit protocol
-        if (j < i) {
-            while (flag[j] >= 2);
-        }
+        await(i, flag, 0, i - 1, finishExit, 2, TRUE); // Wait for all lower ID to finish exit protocol
 
         // The Critical Section starts right below
         int s = sum;
@@ -91,10 +87,7 @@ void *runner(void *param) {
         // The Critical Section ends right above
 
         // Exit protocol
-//        await(flag, waitClose, 3); // Ensure every process know the door is to be close
-        if (j > i) {
-            while (flag[j] == 3 || flag[j] == 2);
-        }
+        await(i, flag, i + 1, N - 1, waitClose, 3, TRUE); // Ensure every process know the door is to be close
         flag[i] = 0; // Leave, reopen door if nobody still in waiting room
 
         // The Remainder Section starts here
