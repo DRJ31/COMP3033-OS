@@ -2,6 +2,7 @@
 .DS_Store
 a.out
 *.o
+*.pdf
 
 #Folders
 .idea/
