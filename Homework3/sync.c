@@ -15,16 +15,13 @@ int flag[N] = {0}; // Initialize array for flag
 void *runner(void *param) {
     int i = *(int *)param; // This thread’s ID number.
     int m;
-    int DOOR_OPENED = FALSE; // Check if the door is still opening
-    int WANT_EXEC; // Check if any other process want to execute
-    int FINISH_EXIT = FALSE; // Check if lower ID process have done exit
-    int READY_LEAVE = FALSE; // Check if the current process is ready to leave
     
     for(m = 0; m < M; m++) {
         // Pi wants to enter the waiting room:
         flag[i] = 1;
-
+        
         // Wait for open door
+        int DOOR_OPENED = FALSE; // Check if the door is still opening
         while (!DOOR_OPENED) {
             DOOR_OPENED = TRUE;
             for (int j = 0; j < N; j++) {
@@ -37,27 +34,25 @@ void *runner(void *param) {
 
         // Pi goes through the entrance door
         flag[i] = 3;
+        
         // Check whether other process wants to enter the waiting room
-        while (DOOR_OPENED) {
+        while (1) {
             int WAIT_ENTER = FALSE; // Check if other process want to enter
             for (int j = 0; j < N; j++) {
-                if (j == i)
-                    continue;
                 if (flag[j] == 1) {
                     WAIT_ENTER = TRUE;
                     break;
                 }
             }
+            
             if (WAIT_ENTER) {
                 // Then Pi starts waiting inside the waiting room
                 flag[i] = 2;
 
                 // Wait for a process to enter and close door
-                WANT_EXEC = FALSE;
+                int WANT_EXEC = FALSE;
                 while (!WANT_EXEC) {
                     for (int j = 0; j < N; j++) {
-                        if (j == i)
-                            continue;
                         if (flag[j] == 4) {
                             WANT_EXEC = TRUE;
                             break;
@@ -65,12 +60,13 @@ void *runner(void *param) {
                     }
                 }
             }
-            DOOR_OPENED = FALSE;
+            break;
         }
 
         flag[i] = 4; // Close the door when no process want to enter
-
+        
         // Wait for all lower ID to finish exit protocol
+        int FINISH_EXIT = FALSE; // Check if lower ID process have done exit
         while (!FINISH_EXIT) {
             FINISH_EXIT = TRUE;
             for (int j = 0; j < i; j++) {
@@ -101,6 +97,7 @@ void *runner(void *param) {
         // The Critical Section ends right above
 
         // Ensure every process know the door is to be close
+        int READY_LEAVE = FALSE; // Check if the current process is ready to leave
         while (!READY_LEAVE) {
             READY_LEAVE = TRUE;
             for (int j = i + 1; j < N; j++) {
