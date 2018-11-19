@@ -19,7 +19,6 @@ void *runner(void *param) {
     for(m = 0; m < M; m++) {
         // Pi wants to enter the waiting room:
         flag[i] = 1;
-        
         // Wait for open door
         int DOOR_OPENED = FALSE; // Check if the door is still opening
         while (!DOOR_OPENED) {
@@ -31,10 +30,9 @@ void *runner(void *param) {
                 }
             }
         }
-
+        
         // Pi goes through the entrance door
         flag[i] = 3;
-        
         // Check whether other process wants to enter the waiting room
         while (1) {
             int WAIT_ENTER = FALSE; // Check if other process want to enter
@@ -44,11 +42,9 @@ void *runner(void *param) {
                     break;
                 }
             }
-            
             if (WAIT_ENTER) {
                 // Then Pi starts waiting inside the waiting room
                 flag[i] = 2;
-
                 // Wait for a process to enter and close door
                 int WANT_EXEC = FALSE;
                 while (!WANT_EXEC) {
@@ -62,11 +58,11 @@ void *runner(void *param) {
             }
             break;
         }
-
-        flag[i] = 4; // Close the door when no process want to enter
         
-        // Wait for all lower ID to finish exit protocol
-        int FINISH_EXIT = FALSE; // Check if lower ID process have done exit
+        // Close the door when no process want to enter
+        flag[i] = 4;
+        // Wait for all lower ID to finish exit
+        int FINISH_EXIT = FALSE;
         while (!FINISH_EXIT) {
             FINISH_EXIT = TRUE;
             for (int j = 0; j < i; j++) {
@@ -76,7 +72,7 @@ void *runner(void *param) {
                 }
             }
         }
-
+        
         // The Critical Section starts right below
         int s = sum;
         // Even threads increase s, odd threads decrease s.
@@ -92,12 +88,13 @@ void *runner(void *param) {
         delay.tv_sec = 0;
         delay.tv_nsec = 100000000ULL * rand() / RAND_MAX;
         nanosleep(&delay, NULL);
-
+        
         sum = s;
         // The Critical Section ends right above
-
+        
         // Ensure every process know the door is to be close
-        int READY_LEAVE = FALSE; // Check if the current process is ready to leave
+        // Check if the current process is ready to leave
+        int READY_LEAVE = FALSE;
         while (!READY_LEAVE) {
             READY_LEAVE = TRUE;
             for (int j = i + 1; j < N; j++) {
@@ -107,11 +104,12 @@ void *runner(void *param) {
                 }
             }
         }
-
-        flag[i] = 0; // Leave, reopen door if nobody still in waiting room
-
+        
+        // Leave, reopen door if nobody still in waiting room
+        flag[i] = 0;
+        
         // The Remainder Section starts here
-        printf("%c", 'A' + i); // Print this thread’s ID number as a letter.
+        printf("%c", 'A' + i);
         fflush(stdout);
     }
     return 0; // Thread dies.
@@ -121,20 +119,19 @@ int main(void) {
     pthread_t tid[N]; // Thread ID numbers.
     int param[N]; // One parameter for each thread.
     int i;
-
+    
     // Create N threads. Each thread executes the runner function with
     // i as argument.
     for(i = 0; i < N; i++) {
         param[i] = i;
         pthread_create(&tid[i], NULL, runner, &param[i]);
     }
-
+    
     // Wait for N threads to finish.
     for(i = 0; i < N; i++) {
         pthread_join(tid[i], NULL);
     }
-
+    
     printf("\nResult is %d\n", sum);
     return 0;
 }
-
